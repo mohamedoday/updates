@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RootHelpChannel | Master Your Android</title>
 <meta name="description" content="Elite guides on Magisk, custom ROMs and kernel optimization. Join @Roothelpchannell on Telegram.">
+<meta name="theme-color" content="#050505">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
@@ -13,86 +14,129 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root { --neon: #39FF14; --bg: #050505; }
-* { box-sizing: border-box; }
-body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e5e7eb; overflow-x: hidden; }
-.mono { font-family: 'JetBrains Mono', monospace; }
-.text-neon { color: var(--neon); text-shadow: 0 0 10px rgba(57,255,20,.5); }
-.gradient-text { background: linear-gradient(45deg, #fff, var(--neon)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-:focus-visible { outline: 2px solid var(--neon); outline-offset: 4px; }
+:root { --neon:#39FF14; --bg:#050505; }
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:#e5e7eb; overflow-x:hidden; }
+.mono { font-family:'JetBrains Mono',monospace; }
+.text-neon { color:var(--neon); text-shadow:0 0 12px rgba(57,255,20,.45); }
+.gradient-text { background:linear-gradient(45deg,#fff,var(--neon)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+:focus-visible { outline:2px solid var(--neon); outline-offset:4px; }
+::selection { background:var(--neon); color:#000; }
 
-/* Custom cursor: only on fine pointers, JS adds .has-cursor */
-#cursor, #ring { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 9999; border-radius: 50%; opacity: 0; }
-#cursor { width: 10px; height: 10px; background: var(--neon); mix-blend-mode: difference; }
-#ring { width: 40px; height: 40px; border: 1px solid rgba(57,255,20,.6); }
-.has-cursor, .has-cursor * { cursor: none !important; }
+/* Background layers */
+#bg { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+.scanlines::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:1; background:repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px); }
+.blob { position:absolute; width:60vw; height:60vw; border-radius:50%; background:radial-gradient(circle, rgba(57,255,20,.09) 0%, transparent 70%); filter:blur(80px); pointer-events:none; z-index:0; }
+.grid-bg { background-image:linear-gradient(rgba(57,255,20,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(57,255,20,.05) 1px,transparent 1px); background-size:60px 60px; -webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%); mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%); }
 
-/* Scroll progress */
-#progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--neon); transform-origin: 0 50%; transform: scaleX(0); z-index: 60; box-shadow: 0 0 10px var(--neon); }
+/* Cursor */
+#cursor,#ring { position:fixed; left:0; top:0; pointer-events:none; z-index:9999; border-radius:50%; opacity:0; }
+#cursor { width:10px; height:10px; background:var(--neon); mix-blend-mode:difference; }
+#ring { width:40px; height:40px; border:1px solid rgba(57,255,20,.6); }
+.has-cursor, .has-cursor * { cursor:none !important; }
 
-/* Nav */
-.nav-glass { background: rgba(5,5,5,.6); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,.05); }
+/* Progress + nav */
+#progress { position:fixed; top:0; left:0; right:0; height:3px; background:var(--neon); transform-origin:0 50%; transform:scaleX(0); z-index:60; box-shadow:0 0 12px var(--neon); }
+#nav { background:rgba(5,5,5,.55); backdrop-filter:blur(14px); border-bottom:1px solid rgba(255,255,255,.06); }
+.nav-link { color:#9ca3af; transition:color .3s; position:relative; }
+.nav-link::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:1px; background:var(--neon); transform:scaleX(0); transform-origin:left; transition:transform .4s; }
+.nav-link:hover, .nav-link.active { color:var(--neon); }
+.nav-link:hover::after, .nav-link.active::after { transform:scaleX(1); }
 
 /* Loader */
-#loader { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
-/* Blobs and grid */
-.blob { position: absolute; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(57,255,20,.08) 0%, transparent 70%); filter: blur(80px); border-radius: 50%; z-index: 0; pointer-events: none; }
-.grid-bg { background-image: linear-gradient(rgba(57,255,20,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(57,255,20,.05) 1px, transparent 1px); background-size: 60px 60px; -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
-
-/* Glass cards with cursor-following spotlight and 3D tilt (JS) */
-.glass { background: rgba(15,15,15,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.06); position: relative; transition: border-color .4s, box-shadow .4s; }
-.spot { overflow: hidden; will-change: transform; }
-.spot::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s; background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(57,255,20,.16), transparent 45%); }
-.spot:hover::before { opacity: 1; }
-.spot:hover { border-color: rgba(57,255,20,.55); box-shadow: 0 20px 40px rgba(0,0,0,.4), 0 0 30px rgba(57,255,20,.12); }
+#loader { position:fixed; inset:0; z-index:10000; background:#000; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 
 /* Buttons */
-.btn-neon { background: var(--neon); color: #000; font-weight: 700; box-shadow: 0 0 20px rgba(57,255,20,.3); position: relative; overflow: hidden; transition: box-shadow .3s; }
-.btn-neon:hover { box-shadow: 0 0 40px rgba(57,255,20,.6); }
-.shine { position: absolute; top: 0; bottom: 0; left: 0; width: 40%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.7), transparent); pointer-events: none; transform: translateX(-200%); }
+.btn { position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:.5rem; background:var(--neon); color:#000; font-weight:700; box-shadow:0 0 20px rgba(57,255,20,.3); transition:box-shadow .3s; }
+.btn:hover { box-shadow:0 0 40px rgba(57,255,20,.6); }
+.shine { position:absolute; top:0; bottom:0; left:0; width:40%; background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent); pointer-events:none; transform:translateX(-200%); }
+.ripple { position:absolute; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:rgba(255,255,255,.6); pointer-events:none; }
+
+/* Glass + spotlight */
+.glass { background:rgba(15,15,15,.6); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.07); position:relative; }
+.spot { overflow:hidden; transition:border-color .4s, box-shadow .4s; will-change:transform; }
+.spot::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .4s; background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%), rgba(57,255,20,.16), transparent 45%); }
+.spot:hover::before { opacity:1; }
+.spot:hover { border-color:rgba(57,255,20,.55); box-shadow:0 20px 40px rgba(0,0,0,.4),0 0 30px rgba(57,255,20,.12); }
+.tag { font-size:.7rem; letter-spacing:.15em; border:1px solid rgba(57,255,20,.35); color:var(--neon); padding:.2rem .6rem; border-radius:999px; }
 
 /* Ticker */
-.ticker-wrap { overflow: hidden; border-block: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.4); }
-.ticker-track { display: flex; width: max-content; white-space: nowrap; }
+.ticker-wrap { overflow:hidden; border-block:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.45); }
+.ticker-track { display:flex; width:max-content; white-space:nowrap; }
 
-/* Terminal caret */
-#term > div:last-child::after { content: "_"; margin-left: 2px; animation: blink 1s steps(1) infinite; }
-@keyframes blink { 50% { opacity: 0; } }
+/* Terminal */
+.term { background:rgba(8,10,8,.85); border:1px solid rgba(57,255,20,.25); border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 40px rgba(57,255,20,.08); overflow:hidden; }
+.term-bar { display:flex; align-items:center; gap:.5rem; padding:.7rem 1rem; border-bottom:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.02); }
+.dot { width:11px; height:11px; border-radius:50%; }
+.term-body { height:340px; overflow-y:auto; padding:1rem 1.25rem; font-family:'JetBrains Mono',monospace; font-size:.9rem; line-height:1.6; cursor:text; }
+.term-input { background:transparent; border:0; outline:0; color:var(--neon); font:inherit; flex:1; min-width:0; caret-color:var(--neon); }
+.caret { display:inline-block; width:.55em; height:1.1em; background:var(--neon); vertical-align:middle; animation:blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity:0; } }
 
-@media (prefers-reduced-motion: reduce) {
-  .shine, #term > div:last-child::after { animation: none; }
-}
+/* Phone */
+.phone-stage { perspective:1200px; }
+.phone { position:relative; width:270px; height:560px; margin:auto; border-radius:44px; background:#0a0a0a; border:10px solid #161616; box-shadow:inset 0 0 0 2px #2a2a2a,0 50px 90px rgba(0,0,0,.7),0 0 60px rgba(57,255,20,.12); transform-style:preserve-3d; }
+.phone .screen { position:absolute; inset:0; border-radius:34px; overflow:hidden; background:linear-gradient(180deg,#07130a,#030503); padding:3.2rem 1.4rem 1.4rem; }
+.phone .scan { position:absolute; left:0; right:0; height:40px; background:linear-gradient(transparent,rgba(57,255,20,.18),transparent); animation:scan 3s linear infinite; }
+@keyframes scan { from { top:-40px; } to { top:100%; } }
+.phone .glare { position:absolute; inset:0; background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.09) 50%,transparent 65%); pointer-events:none; }
+.phone-img { width:100%; height:100%; object-fit:cover; opacity:.35; filter:grayscale(.4) contrast(1.1); }
+
+/* Pinned horizontal path */
+#path { height:100vh; overflow:hidden; position:relative; }
+.h-track { display:flex; gap:3rem; align-items:center; height:100%; width:max-content; padding:0 10vw 0 8vw; }
+.stage { width:min(82vw,440px); height:min(68vh,420px); flex:none; padding:2.2rem; display:flex; flex-direction:column; justify-content:space-between; border-radius:28px; }
+.stage .num { font-size:5rem; font-weight:800; line-height:1; color:transparent; -webkit-text-stroke:1px rgba(57,255,20,.55); }
+.path-rail { position:absolute; left:8vw; right:8vw; bottom:12vh; height:2px; background:rgba(255,255,255,.08); }
+#path-bar { position:absolute; inset:0; background:var(--neon); box-shadow:0 0 12px var(--neon); transform-origin:0 50%; transform:scaleX(0); }
+
+/* Reduced motion: stack everything, no pinning */
+.reduce #path { height:auto; overflow:visible; padding:6rem 0; }
+.reduce .h-track { flex-wrap:wrap; width:auto; height:auto; justify-content:center; padding:0 6vw; }
+.reduce .path-rail { display:none; }
+.reduce .scanlines::after, .reduce .phone .scan { display:none; }
+.reduce .caret { animation:none; }
+
+#totop { position:fixed; right:1.5rem; bottom:1.5rem; z-index:50; opacity:0; visibility:hidden; }
 </style>
 </head>
-<body class="antialiased">
+<body class="antialiased scanlines">
+
+<canvas id="bg" aria-hidden="true"></canvas>
 
 <!-- Boot loader -->
 <div id="loader" aria-hidden="true">
   <div class="mono text-sm md:text-base text-neon w-[min(90vw,560px)]">
     <div id="boot" class="space-y-1 min-h-[11rem]"></div>
-    <div class="mt-4 h-[2px] bg-white/10"><div id="bar" class="h-full bg-[#39FF14] origin-left" style="transform:scaleX(0)"></div></div>
+    <div class="mt-4 h-[2px] bg-white/10 overflow-hidden"><div id="bar" class="h-full bg-[#39FF14]" style="transform:scaleX(0);transform-origin:0 50%"></div></div>
     <p class="mt-3 text-xs text-gray-600">click to skip</p>
   </div>
 </div>
 
-<!-- Cursor -->
 <div id="cursor"></div>
 <div id="ring"></div>
 <div id="progress"></div>
 
 <!-- Nav -->
-<nav id="nav" class="fixed top-0 inset-x-0 z-40 nav-glass">
+<nav id="nav" class="fixed top-0 inset-x-0 z-40">
   <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-    <a href="#top" class="mono font-bold text-neon">RootHelp<span class="text-white">Channel</span></a>
-    <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn-neon magnetic px-5 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+    <a href="#top" class="mono font-bold text-neon" data-scramble>RootHelp<span class="text-white">Channel</span></a>
+    <div class="hidden md:flex items-center gap-8 text-sm mono">
+      <a href="#guides" class="nav-link" data-link="guides">Guides</a>
+      <a href="#path" class="nav-link" data-link="path">Path</a>
+      <a href="#terminal" class="nav-link" data-link="terminal">Terminal</a>
+      <a href="#trust" class="nav-link" data-link="trust">Trust</a>
+    </div>
+    <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn magnetic px-5 py-2 rounded-lg text-sm">
       <span class="shine"></span><i data-lucide="send" class="w-4 h-4"></i> Join
     </a>
   </div>
 </nav>
 
+<main>
 <!-- Hero -->
-<section id="top" class="hero min-h-screen flex flex-col items-center justify-center px-6 text-center relative overflow-hidden">
+<section id="top" class="min-h-screen flex flex-col items-center justify-center px-6 text-center relative overflow-hidden">
   <div class="absolute inset-0 grid-bg pointer-events-none"></div>
   <div class="blob" id="blob1" style="top:-10%;left:-10%"></div>
   <div class="blob" id="blob2" style="bottom:-10%;right:-10%"></div>
@@ -101,7 +145,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e5e7eb; 
     <div class="inline-block px-4 py-1 mb-6 border border-green-500/30 rounded-full bg-green-500/10 text-neon text-sm mono" id="badge">
       &lt; Rooting_Enabled /&gt;
     </div>
-    <h1 class="text-5xl md:text-8xl font-extrabold mb-6 leading-tight" style="perspective:800px">
+    <h1 class="text-5xl md:text-8xl font-extrabold mb-6 leading-tight">
       <span class="block" id="line1">Unleash the Full Power</span>
       <span class="block gradient-text" id="line2">of Your Android</span>
     </h1>
@@ -109,15 +153,19 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e5e7eb; 
       Join <span class="text-white font-semibold">@Roothelpchannell</span> on Telegram for elite guides on Magisk, Custom ROMs, and kernel optimization.
     </p>
     <div id="hero-cta">
-      <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn-neon magnetic px-8 py-4 rounded-xl text-lg inline-flex items-center gap-2">
+      <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn magnetic px-8 py-4 rounded-xl text-lg">
         <span class="shine"></span><i data-lucide="send"></i> Join Telegram Channel
       </a>
     </div>
+    <a href="#guides" class="mt-16 inline-flex flex-col items-center gap-2 mono text-xs text-gray-500 hover:text-neon transition-colors">
+      SCROLL
+      <i data-lucide="chevrons-down" class="w-4 h-4 animate-bounce"></i>
+    </a>
   </div>
 </section>
 
 <!-- Ticker -->
-<div class="ticker-wrap py-5 ">
+<div class="ticker-wrap py-5">
   <div class="ticker-track mono text-sm md:text-base text-gray-500 tracking-widest">
     <div class="flex gap-10 pr-10 shrink-0">
       <span>MAGISK</span><span class="text-neon">✦</span><span>LSPOSED</span><span class="text-neon">✦</span>
@@ -127,40 +175,80 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e5e7eb; 
   </div>
 </div>
 
-<!-- Features -->
-<section class="py-24 px-6 max-w-6xl mx-auto">
+<!-- Guides / features -->
+<section id="guides" class="py-28 px-6 max-w-6xl mx-auto">
   <div class="text-center mb-16 reveal">
+    <p class="mono text-neon text-sm mb-3" data-scramble>// 01 GUIDES</p>
     <h2 class="text-4xl md:text-6xl font-bold mb-4">Master the <span class="text-neon">OS</span></h2>
     <p class="text-gray-400">Everything you need to transition from a user to a power-user.</p>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-8" style="perspective:1000px">
     <div class="glass spot p-8 rounded-3xl feature-card">
-      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="book-open"></i></div>
+      <div class="flex justify-between items-start mb-6"><div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon"><i data-lucide="book-open"></i></div><span class="tag mono">GUIDES</span></div>
       <h3 class="text-2xl font-bold mb-3">Root Guides &amp; Tutorials</h3>
       <p class="text-gray-400 leading-relaxed">Comprehensive, step-by-step walkthroughs for unlocking bootloaders and achieving root access safely.</p>
     </div>
     <div class="glass spot p-8 rounded-3xl feature-card">
-      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="cpu"></i></div>
+      <div class="flex justify-between items-start mb-6"><div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon"><i data-lucide="cpu"></i></div><span class="tag mono">MODULES</span></div>
       <h3 class="text-2xl font-bold mb-3">Magisk &amp; Kernel Tweaks</h3>
       <p class="text-gray-400 leading-relaxed">The best Magisk modules, LSPosed configurations, and custom kernels to push your hardware to the limit.</p>
     </div>
     <div class="glass spot p-8 rounded-3xl feature-card">
-      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="life-buoy"></i></div>
+      <div class="flex justify-between items-start mb-6"><div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon"><i data-lucide="life-buoy"></i></div><span class="tag mono">RECOVERY</span></div>
       <h3 class="text-2xl font-bold mb-3">Brick Recovery</h3>
       <p class="text-gray-400 leading-relaxed">Facing a bootloop or soft-brick? We provide the tools and knowledge to rescue your device.</p>
     </div>
     <div class="glass spot p-8 rounded-3xl feature-card">
-      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="zap"></i></div>
+      <div class="flex justify-between items-start mb-6"><div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon"><i data-lucide="zap"></i></div><span class="tag mono">PERF</span></div>
       <h3 class="text-2xl font-bold mb-3">Performance Optimization</h3>
       <p class="text-gray-400 leading-relaxed">Gaming tweaks, battery life optimization, and debloating guides for a buttery smooth experience.</p>
     </div>
   </div>
 </section>
 
+<!-- Pinned path -->
+<section id="path" class="relative">
+  <div class="path-rail"><div id="path-bar"></div></div>
+  <div class="absolute top-10 left-[8vw] z-10">
+    <p class="mono text-neon text-sm mb-2" data-scramble>// 02 THE PATH</p>
+    <h2 class="text-3xl md:text-5xl font-bold">From user to <span class="text-neon">power-user</span></h2>
+    <p class="text-gray-500 text-sm mt-2 mono">scroll →</p>
+  </div>
+  <div class="h-track pt-28">
+    <div class="glass stage"><div class="num">01</div><div><h3 class="text-2xl font-bold mb-3">Back up first</h3><p class="text-gray-400 leading-relaxed">Save photos, app data and a full backup before touching anything. Every guide starts here.</p></div></div>
+    <div class="glass stage"><div class="num">02</div><div><h3 class="text-2xl font-bold mb-3">Unlock the bootloader</h3><p class="text-gray-400 leading-relaxed">Unlocking wipes the device. Confirm your manufacturer's process and that your model is supported.</p></div></div>
+    <div class="glass stage"><div class="num">03</div><div><h3 class="text-2xl font-bold mb-3">Patch with Magisk</h3><p class="text-gray-400 leading-relaxed">Patch the boot image, flash it, then verify root with a checker app.</p></div></div>
+    <div class="glass stage"><div class="num">04</div><div><h3 class="text-2xl font-bold mb-3">Tune &amp; debloat</h3><p class="text-gray-400 leading-relaxed">Remove bloat, apply performance tweaks, and keep a recovery path ready at all times.</p></div></div>
+  </div>
+</section>
+
+<!-- Interactive terminal -->
+<section id="terminal" class="py-28 px-6 max-w-4xl mx-auto">
+  <div class="text-center mb-12 reveal">
+    <p class="mono text-neon text-sm mb-3" data-scramble>// 03 TRY IT</p>
+    <h2 class="text-4xl md:text-5xl font-bold mb-4">Talk to the <span class="text-neon">terminal</span></h2>
+    <p class="text-gray-400">Type <span class="mono text-white">help</span>. Press <span class="mono text-white">/</span> anywhere to jump here.</p>
+  </div>
+  <div class="term reveal" id="term-box">
+    <div class="term-bar">
+      <span class="dot bg-red-500/80"></span><span class="dot bg-yellow-400/80"></span><span class="dot bg-green-500/80"></span>
+      <span class="mono text-xs text-gray-500 ml-3">guest@rootshelp:~</span>
+    </div>
+    <div class="term-body" id="t-body">
+      <div id="t-out"></div>
+      <label class="flex items-center gap-2 mt-1">
+        <span class="text-neon whitespace-nowrap">guest@rootshelp:~$</span>
+        <input id="t-in" class="term-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input">
+      </label>
+    </div>
+  </div>
+</section>
+
 <!-- Trust -->
-<section class="py-24 px-6 bg-zinc-900/30 relative overflow-hidden">
+<section id="trust" class="py-28 px-6 bg-zinc-900/30 relative overflow-hidden">
   <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
     <div class="trust-text">
+      <p class="mono text-neon text-sm mb-3" data-scramble>// 04 TRUST</p>
       <h2 class="text-4xl md:text-6xl font-bold mb-8 leading-tight">Why Trust <br><span class="text-neon">@Roothelpchannell?</span></h2>
       <div class="space-y-8">
         <div class="flex gap-5 trust-item">
@@ -178,13 +266,16 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e5e7eb; 
       </div>
     </div>
 
-    <div class="relative trust-img">
-      <div class="glass p-4 rounded-[2rem] rotate-3 hover:rotate-0 transition-transform duration-700">
-        <div class="rounded-2xl overflow-hidden">
-          <img class="trust-photo w-full scale-110 rounded-2xl opacity-90" src="https://images.unsplash.com/photo-1512941937669-90a1b58e7054?auto=format&fit=crop&q=80&w=800" alt="Android">
-        </div>
-        <div class="glass absolute -bottom-8 -left-8 p-6 rounded-2xl shadow-2xl">
-          <div id="term" class="mono text-sm font-bold text-neon min-h-[3.5rem] space-y-1"></div>
+    <div class="phone-stage trust-img">
+      <div class="phone" id="phone">
+        <div class="screen">
+          <img class="phone-img" src="https://images.unsplash.com/photo-1512941937669-90a1b58e7054?auto=format&fit=crop&q=80&w=800" alt="" aria-hidden="true">
+          <div class="absolute inset-0 p-6 pt-12 mono text-sm text-neon" style="text-shadow:0 0 10px rgba(57,255,20,.6)">
+            <div class="text-xs text-gray-500 mb-4">ROOTHELP // DEVICE SCAN</div>
+            <div id="phone-lines" class="space-y-2 font-bold"></div>
+          </div>
+          <div class="scan"></div>
+          <div class="glare"></div>
         </div>
       </div>
     </div>
@@ -192,65 +283,154 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e5e7eb; 
 </section>
 
 <!-- Footer CTA -->
-<footer class="py-32 px-6 text-center relative">
+<footer id="join" class="py-32 px-6 text-center relative">
   <div class="footer-content">
     <h2 id="foot-h" class="text-4xl md:text-7xl font-bold mb-8">Ready to break the limits?</h2>
     <p class="text-gray-400 mb-12 max-w-xl mx-auto text-lg">Stop settling for factory restrictions. Join the elite Android community on Telegram.</p>
-    <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn-neon magnetic px-12 py-5 rounded-2xl text-xl inline-flex items-center gap-3">
-      <span class="shine"></span><i data-lucide="send"></i> Join @Roothelpchannell
+    <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn magnetic px-12 py-5 rounded-2xl text-xl" id="join-btn">
+      <span class="shine"></span><i data-lucide="send"></i> <span class="label" data-scramble>Join @Roothelpchannell</span>
     </a>
   </div>
   <div class="mt-32 pt-8 border-t border-white/10 text-gray-600 text-sm mono">
     &copy; 2026 RootHelpChannel | Android Rooting Specialists
   </div>
 </footer>
+</main>
+
+<button id="totop" class="btn w-12 h-12 rounded-full justify-center" aria-label="Back to top">
+  <i data-lucide="arrow-up" class="w-5 h-5"></i>
+</button>
 
 <script>
-/* ---------- Setup ---------- */
+/* ==================== Setup ==================== */
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const finePointer = matchMedia('(pointer:fine)').matches;
+const fine = matchMedia('(pointer:fine)').matches;
+if (reduce) document.documentElement.classList.add('reduce');
 gsap.registerPlugin(ScrollTrigger);
 lucide.createIcons();
 
-/* ---------- Helpers ---------- */
-// Splits text into word and char spans (words never break mid-word).
-function splitText(el, cls = '') {
+/* ==================== Helpers ==================== */
+// Wrap each character of an element in a span; returns the char spans.
+function splitChars(el) {
   const text = el.textContent.trim();
   el.textContent = '';
   el.setAttribute('aria-label', text);
-  const words = [], chars = [];
-  text.split(/\s+/).forEach((word, i) => {
-    if (i) el.appendChild(document.createTextNode(' '));
+  const chars = [];
+  const words = text.split(' ');
+  words.forEach((word, wi) => {
     const w = document.createElement('span');
     w.className = 'inline-block whitespace-nowrap';
     w.setAttribute('aria-hidden', 'true');
-    [...word].forEach(c => {
+    [...word].forEach(ch => {
       const s = document.createElement('span');
-      s.className = 'inline-block ' + cls;
-      s.textContent = c;
+      s.className = 'inline-block';
+      s.textContent = ch;
       w.appendChild(s);
       chars.push(s);
     });
     el.appendChild(w);
-    words.push(w);
+    if (wi < words.length - 1) el.appendChild(document.createTextNode(' '));
   });
-  return { words, chars };
+  return chars;
 }
 
-// Types each line into a container, one after another, on a timeline.
-function typeSequence(tl, container, lines, speed = 0.03) {
+// Types lines one after another onto a timeline.
+function typeLines(tl, el, lines, speed) {
   lines.forEach(text => {
-    const line = document.createElement('div');
-    container.appendChild(line);
+    const row = document.createElement('div');
+    el.appendChild(row);
     const o = { n: 0 };
     tl.to(o, { n: text.length, duration: text.length * speed, ease: 'none',
-      onUpdate: () => { line.textContent = text.slice(0, Math.round(o.n)); } });
-    tl.to({}, { duration: 0.12 });
+      onUpdate: () => { row.textContent = text.slice(0, Math.round(o.n)); } });
+    tl.to({}, { duration: 0.15 });
   });
   return tl;
 }
 
-/* ---------- Boot loader ---------- */
+// Writes lines instantly (used for reduced motion).
+function writeLines(el, lines) {
+  lines.forEach(t => { const r = document.createElement('div'); r.textContent = t; el.appendChild(r); });
+}
+
+// Matrix-style text scramble that resolves left to right.
+const GLYPHS = '!<>-_\\/[]{}=+*^?#01';
+function scramble(el) {
+  const final = el.dataset.final || el.textContent;
+  el.dataset.final = final;
+  clearInterval(el._timer);
+  let f = 0;
+  const max = final.length * 2 + 8;
+  el._timer = setInterval(() => {
+    let out = '';
+    for (let i = 0; i < final.length; i++) {
+      const ch = final[i];
+      out += ch === ' ' ? ' ' : (f > i * 2 ? ch : GLYPHS[Math.random() * GLYPHS.length | 0]);
+    }
+    el.textContent = out;
+    if (++f > max) { clearInterval(el._timer); el.textContent = final; }
+  }, 35);
+}
+
+/* ==================== Particle field (canvas) ==================== */
+(function particles() {
+  if (reduce) return;
+  const c = document.getElementById('bg');
+  const ctx = c.getContext('2d');
+  const mouse = { x: -1e4, y: -1e4 };
+  let w, h, dpr, pts = [];
+
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight;
+    c.width = w * dpr; c.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.min(110, Math.floor(w * h / 14000));
+    pts = Array.from({ length: n }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      bx: (Math.random() - .5) * .25, by: (Math.random() - .5) * .25,
+      vx: 0, vy: 0, r: Math.random() * 1.4 + .4
+    }));
+  }
+  size();
+  addEventListener('resize', size);
+  addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  document.addEventListener('mouseleave', () => { mouse.x = mouse.y = -1e4; });
+
+  function frame() {
+    ctx.clearRect(0, 0, w, h);
+    for (const p of pts) {
+      const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
+      if (d2 < 25000) { p.vx += dx / 900; p.vy += dy / 900; }   // push away from pointer
+      p.vx *= .94; p.vy *= .94;
+      p.x += p.bx + p.vx; p.y += p.by + p.vy;
+      if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+    }
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i];
+      for (let j = i + 1; j < pts.length; j++) {
+        const b = pts[j];
+        const dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy);
+        if (d < 120) {
+          ctx.strokeStyle = `rgba(57,255,20,${(1 - d / 120) * .18})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+      const m = Math.hypot(a.x - mouse.x, a.y - mouse.y);
+      if (m < 170) {
+        ctx.strokeStyle = `rgba(57,255,20,${(1 - m / 170) * .5})`;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(57,255,20,.75)';
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ==================== Boot loader ==================== */
 const bootLines = [
   '> init RootHelpChannel kernel',
   '> checking bootloader ........ [LOCKED]',
@@ -262,180 +442,335 @@ const bootLines = [
 
 function runBoot() {
   const loader = document.getElementById('loader');
-  const tl = gsap.timeline({ defaults: { ease: 'none' } });
-  typeSequence(tl, document.getElementById('boot'), bootLines, 0.012);
-  tl.to('#bar', { transform: 'scaleX(1)', duration: tl.duration(), ease: 'power1.inOut' }, 0);
-  tl.to(loader, {
-    yPercent: -100, duration: 0.9, delay: 0.3, ease: 'expo.inOut',
-    onStart: startSite,
-    onComplete: () => loader.remove()
-  });
-  loader.addEventListener('click', () => tl.timeScale(12));
+  const tl = gsap.timeline({ delay: .2 });
+  typeLines(tl, document.getElementById('boot'), bootLines, .015);
+  tl.to('#bar', { scaleX: 1, duration: tl.duration(), ease: 'none' }, 0);
+  tl.to({}, { duration: .3 })
+    .to(loader, { yPercent: -100, duration: 1, ease: 'expo.inOut', onStart: startSite, onComplete: () => loader.remove() });
+  loader.addEventListener('click', () => tl.timeScale(10));
 }
 
-/* ---------- Site motion (starts after loader) ---------- */
-const hero1 = splitText(document.getElementById('line1'));
-const hero2 = splitText(document.getElementById('line2'));
-const footChars = splitText(document.getElementById('foot-h')).chars;
+/* ==================== Site ==================== */
+let chars1 = [], footChars = [];
 
 function startSite() {
-  // Hero intro
-  gsap.set(hero1.chars.concat(hero2.chars), { yPercent: 110, rotateX: -90, opacity: 0, transformOrigin: '50% 100%' });
+  chars1 = splitChars(document.getElementById('line1'));
+  footChars = splitChars(document.getElementById('foot-h'));
+
+  if (reduce) {
+    writeLines(document.getElementById('phone-lines'), phoneLines);
+    return;
+  }
+
+  /* Hero intro */
+  gsap.set(chars1, { yPercent: 110, rotateX: -90, opacity: 0, transformOrigin: '50% 100%' });
+  gsap.set('#line2', { clipPath: 'inset(0 100% 0 0)' });
   gsap.set('#badge', { scale: 0, opacity: 0 });
   gsap.set('#hero-p', { y: 30, opacity: 0 });
-  gsap.set('#hero-cta', { y: 20, opacity: 0, scale: 0.9 });
+  gsap.set('#hero-cta', { y: 20, opacity: 0 });
   gsap.set('.ticker-wrap', { opacity: 0 });
+  gsap.timeline({ defaults: { ease: 'power4.out' } })
+    .to('#badge', { scale: 1, opacity: 1, duration: .6, ease: 'back.out(1.7)' })
+    .to(chars1, { yPercent: 0, rotateX: 0, opacity: 1, duration: 1, stagger: .03 }, '-=.2')
+    .to('#line2', { clipPath: 'inset(0 0% 0 0)', duration: 1.1, ease: 'power3.inOut' }, '-=.6')
+    .to('#hero-p', { y: 0, opacity: 1, duration: .9 }, '-=.6')
+    .to('#hero-cta', { y: 0, opacity: 1, duration: .7, ease: 'back.out(1.4)' }, '-=.5')
+    .to('.ticker-wrap', { opacity: 1, duration: .8 }, '-=.4');
 
-  const intro = gsap.timeline({ defaults: { ease: 'power4.out' } });
-  intro.to('#badge', { scale: 1, opacity: 1, duration: 0.6, ease: 'back.out(1.7)' })
-    .to(hero1.chars, { yPercent: 0, rotateX: 0, opacity: 1, duration: 1, stagger: 0.025 }, '-=0.2')
-    .to(hero2.chars, { yPercent: 0, rotateX: 0, opacity: 1, duration: 1, stagger: 0.025 }, '-=0.7')
-    .to('#hero-p', { y: 0, opacity: 1, duration: 0.9 }, '-=0.5')
-    .to('#hero-cta', { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: 'back.out(1.4)' }, '-=0.6')
-    .to('.ticker-wrap', { opacity: 1, duration: 0.8 }, '-=0.4');
-
-  if (reduce) return;
-
-  // Scroll progress bar
-  gsap.to('#progress', { scaleX: 1, ease: 'none',
-    scrollTrigger: { trigger: document.documentElement, start: 'top top', end: 'bottom bottom', scrub: 0.3 } });
-
-  // Hero fades and drifts as you scroll away
-  gsap.to('.hero-content', { yPercent: 30, opacity: 0, ease: 'none',
-    scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
-
-  // Nav hides on scroll down, returns on scroll up
-  ScrollTrigger.create({
-    start: 'top -120', end: 'max',
-    onUpdate: s => gsap.to('#nav', { yPercent: s.direction === 1 ? -100 : 0, duration: 0.4, ease: 'power3.out', overwrite: true })
+  // Hero headline glitches when hovered
+  document.getElementById('line2').addEventListener('mouseenter', () => {
+    const t = gsap.timeline();
+    for (let i = 0; i < 6; i++) t.to('#line2', { x: gsap.utils.random(-8, 8), skewX: gsap.utils.random(-10, 10), duration: .04 });
+    t.to('#line2', { x: 0, skewX: 0, duration: .05 });
   });
 
-  // Generic reveal headings
+  // Hero parallax with pointer
+  if (fine) {
+    const hx = gsap.quickTo('.hero-content', 'x', { duration: 1, ease: 'power3' });
+    const hy = gsap.quickTo('.hero-content', 'y', { duration: 1, ease: 'power3' });
+    addEventListener('mousemove', e => {
+      hx((e.clientX / innerWidth - .5) * -18);
+      hy((e.clientY / innerHeight - .5) * -12);
+    });
+  }
+
+  /* Scroll progress + hero exit */
+  gsap.to('#progress', { scaleX: 1, ease: 'none',
+    scrollTrigger: { trigger: document.documentElement, start: 'top top', end: 'bottom bottom', scrub: .3 } });
+  gsap.to('.hero-content', { yPercent: 30, opacity: 0, ease: 'none',
+    scrollTrigger: { trigger: '#top', start: 'top top', end: 'bottom top', scrub: true } });
+
+  /* Nav: hide on scroll down, show on scroll up, highlight active section */
+  ScrollTrigger.create({
+    start: 'top -120', end: 'max',
+    onUpdate: s => gsap.to('#nav', { yPercent: s.direction === 1 ? -100 : 0, duration: .4, ease: 'power3.out', overwrite: true })
+  });
+  document.querySelectorAll('section[id]').forEach(sec => {
+    ScrollTrigger.create({
+      trigger: sec, start: 'top center', end: 'bottom center',
+      onToggle: s => document.querySelectorAll(`[data-link="${sec.id}"]`).forEach(a => a.classList.toggle('active', s.isActive))
+    });
+  });
+  ScrollTrigger.create({
+    start: 600,
+    onToggle: s => gsap.to('#totop', { autoAlpha: s.isActive ? 1 : 0, y: s.isActive ? 0 : 20, duration: .3 })
+  });
+  document.getElementById('totop').addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+
+  /* Eyebrow labels scramble into view */
+  document.querySelectorAll('[data-scramble]').forEach(el => {
+    if (el.closest('nav') || el.classList.contains('label')) return;
+    ScrollTrigger.create({ trigger: el, start: 'top 90%', once: true, onEnter: () => scramble(el) });
+  });
+
+  /* Section headings reveal */
   gsap.utils.toArray('.reveal').forEach(el => {
-    gsap.set(el, { y: 60, opacity: 0 });
-    gsap.to(el, { y: 0, opacity: 1, duration: 1, ease: 'power3.out',
+    gsap.fromTo(el, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power3.out',
       scrollTrigger: { trigger: el, start: 'top 85%' } });
   });
 
-  // Feature cards: staggered batch on enter
+  /* Feature cards: staggered batch with 3D flip */
   gsap.set('.feature-card', { y: 90, opacity: 0, rotateX: -15 });
   ScrollTrigger.batch('.feature-card', {
     start: 'top 88%', once: true,
-    onEnter: batch => gsap.to(batch, { y: 0, opacity: 1, rotateX: 0, stagger: 0.15, duration: 1, ease: 'power4.out' })
+    onEnter: batch => gsap.to(batch, { y: 0, opacity: 1, rotateX: 0, stagger: .15, duration: 1, ease: 'power4.out' })
   });
 
-  // Trust list and image
+  /* Pinned horizontal path */
+  const track = document.querySelector('.h-track');
+  const travel = () => Math.max(0, track.scrollWidth - innerWidth);
+  gsap.to(track, { x: () => -travel(), ease: 'none',
+    scrollTrigger: { trigger: '#path', pin: true, scrub: 1, start: 'top top',
+      end: () => '+=' + travel(), invalidateOnRefresh: true, anticipatePin: 1 } });
+  gsap.to('#path-bar', { scaleX: 1, ease: 'none',
+    scrollTrigger: { trigger: '#path', start: 'top top', end: () => '+=' + travel(), scrub: true, invalidateOnRefresh: true } });
+  gsap.utils.toArray('.stage').forEach((st, i) => {
+    gsap.from(st, { opacity: .2, scale: .9, ease: 'none',
+      scrollTrigger: { trigger: st, containerAnimation: null, start: 'left 110%', end: 'left 60%', scrub: true, horizontal: true, invalidateOnRefresh: true } });
+  });
+
+  /* Trust text + phone */
   gsap.set('.trust-item', { x: -40, opacity: 0 });
   gsap.set('.trust-img', { x: 120, rotate: 10, opacity: 0 });
-  gsap.to('.trust-item', { x: 0, opacity: 1, stagger: 0.25, duration: 0.8, ease: 'power2.out',
+  gsap.to('.trust-item', { x: 0, opacity: 1, stagger: .25, duration: .8, ease: 'power2.out',
     scrollTrigger: { trigger: '.trust-text', start: 'top 75%' } });
   gsap.to('.trust-img', { x: 0, rotate: 0, opacity: 1, duration: 1.2, ease: 'power4.out',
     scrollTrigger: { trigger: '.trust-img', start: 'top 80%' } });
-
-  // Photo parallax inside the trust card
-  gsap.to('.trust-photo', { yPercent: -10, ease: 'none',
-    scrollTrigger: { trigger: '.trust-img', start: 'top bottom', end: 'bottom top', scrub: true } });
-
-  // Terminal types out once when the card appears
+  gsap.to('#phone', { y: -14, duration: 2.4, repeat: -1, yoyo: true, ease: 'sine.inOut' });
   ScrollTrigger.create({
     trigger: '.trust-img', start: 'top 70%', once: true,
-    onEnter: () => typeSequence(gsap.timeline({ delay: 0.4 }), document.getElementById('term'),
-      ['STATUS: ROOTED', 'KERNEL: LIQUID_CUSTOM_V4'], 0.04)
+    onEnter: () => typeLines(gsap.timeline({ delay: .4 }), document.getElementById('phone-lines'), phoneLines, .045)
   });
 
-  // Footer headline: letters light up as you scroll
-  gsap.fromTo(footChars, { opacity: 0.12 }, { opacity: 1, duration: 1, stagger: 0.05, ease: 'none',
+  /* Footer headline: letters light up on scroll */
+  gsap.fromTo(footChars, { opacity: .12 }, { opacity: 1, stagger: .05, ease: 'none',
     scrollTrigger: { trigger: '#foot-h', start: 'top 85%', end: 'bottom 45%', scrub: true } });
-
-  // Footer CTA block
   gsap.set('.footer-content', { y: 50, opacity: 0 });
   gsap.to('.footer-content', { y: 0, opacity: 1, duration: 1, ease: 'power3.out',
     scrollTrigger: { trigger: '.footer-content', start: 'top 90%' } });
-}
 
-if (reduce) {
-  document.getElementById('loader').remove();
-  startSite();
-} else {
-  runBoot();
-}
+  /* Footer link: scramble on hover */
+  const joinLabel = document.querySelector('#join-btn .label');
+  document.getElementById('join-btn').addEventListener('mouseenter', () => scramble(joinLabel));
+  document.querySelector('[data-scramble]').addEventListener('mouseenter', e => scramble(e.currentTarget));
 
-/* ---------- Ambient: ticker that slows on hover ---------- */
-const ticker = document.querySelector('.ticker-track');
-ticker.innerHTML += ticker.innerHTML; // duplicate so the loop is seamless
-if (!reduce) {
+  /* Ticker, slows on hover */
+  const ticker = document.querySelector('.ticker-track');
+  ticker.innerHTML += ticker.innerHTML;
   const tk = gsap.to(ticker, { xPercent: -50, duration: 28, ease: 'none', repeat: -1 });
   const wrap = document.querySelector('.ticker-wrap');
-  wrap.addEventListener('mouseenter', () => gsap.to(tk, { timeScale: 0.15, duration: 0.6 }));
-  wrap.addEventListener('mouseleave', () => gsap.to(tk, { timeScale: 1, duration: 0.6 }));
-}
+  wrap.addEventListener('mouseenter', () => gsap.to(tk, { timeScale: .15, duration: .6 }));
+  wrap.addEventListener('mouseleave', () => gsap.to(tk, { timeScale: 1, duration: .6 }));
 
-/* ---------- Ambient: parallax blobs following the mouse ---------- */
-if (!reduce) {
+  /* Background blobs follow pointer */
   const b1x = gsap.quickTo('#blob1', 'x', { duration: 1.5, ease: 'power3' });
   const b1y = gsap.quickTo('#blob1', 'y', { duration: 1.5, ease: 'power3' });
   const b2x = gsap.quickTo('#blob2', 'x', { duration: 1.5, ease: 'power3' });
   const b2y = gsap.quickTo('#blob2', 'y', { duration: 1.5, ease: 'power3' });
-  window.addEventListener('mousemove', e => {
-    const x = e.clientX / innerWidth - 0.5, y = e.clientY / innerHeight - 0.5;
+  addEventListener('mousemove', e => {
+    const x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
     b1x(x * 100); b1y(y * 100); b2x(-x * 100); b2y(-y * 100);
   });
+
+  /* Lower-level UI effects */
+  initCursor();
+  initMagnetic();
+  initTilt();
+  initPhoneTilt();
+  initTerminal();
+  initRipple();
+  ScrollTrigger.refresh();
 }
 
-/* ---------- Custom cursor (fine pointers only) ---------- */
-if (!reduce && finePointer) {
+const phoneLines = [
+  '> STATUS: ROOTED',
+  '> KERNEL: LIQUID_CUSTOM_V4',
+  '> MAGISK: active',
+  '> LSPOSED: loaded'
+];
+
+/* ---------- Cursor ---------- */
+function initCursor() {
+  if (!fine) return;
   document.body.classList.add('has-cursor');
   const dot = document.getElementById('cursor'), ring = document.getElementById('ring');
   gsap.set([dot, ring], { xPercent: -50, yPercent: -50 });
-  const dx = gsap.quickTo(dot, 'x', { duration: 0.1 }), dy = gsap.quickTo(dot, 'y', { duration: 0.1 });
-  const rx = gsap.quickTo(ring, 'x', { duration: 0.5, ease: 'power3' }), ry = gsap.quickTo(ring, 'y', { duration: 0.5, ease: 'power3' });
+  const dx = gsap.quickTo(dot, 'x', { duration: .1 }), dy = gsap.quickTo(dot, 'y', { duration: .1 });
+  const rx = gsap.quickTo(ring, 'x', { duration: .5, ease: 'power3' }), ry = gsap.quickTo(ring, 'y', { duration: .5, ease: 'power3' });
   let shown = false;
-  window.addEventListener('mousemove', e => {
-    if (!shown) { gsap.to([dot, ring], { opacity: 1, duration: 0.3 }); shown = true; }
+  addEventListener('mousemove', e => {
+    if (!shown) { gsap.to([dot, ring], { opacity: 1, duration: .3 }); shown = true; }
     dx(e.clientX); dy(e.clientY); rx(e.clientX); ry(e.clientY);
   });
-  window.addEventListener('mousedown', () => gsap.to(ring, { scale: 0.7, duration: 0.15 }));
-  window.addEventListener('mouseup', () => gsap.to(ring, { scale: 1, duration: 0.3 }));
-  document.querySelectorAll('a, button, .spot').forEach(el => {
-    el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 1.8, backgroundColor: 'rgba(57,255,20,.1)', duration: 0.3 }));
-    el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, backgroundColor: 'rgba(0,0,0,0)', duration: 0.3 }));
+  addEventListener('mousedown', () => gsap.to(ring, { scale: .7, duration: .15 }));
+  addEventListener('mouseup', () => gsap.to(ring, { scale: 1, duration: .3 }));
+  document.addEventListener('mouseover', e => {
+    if (e.target.closest('a, button, input, .spot, .stage')) gsap.to(ring, { scale: 1.8, backgroundColor: 'rgba(57,255,20,.12)', duration: .3 });
+  });
+  document.addEventListener('mouseout', e => {
+    if (e.target.closest('a, button, input, .spot, .stage')) gsap.to(ring, { scale: 1, backgroundColor: 'rgba(0,0,0,0)', duration: .3 });
   });
 }
 
 /* ---------- Magnetic buttons ---------- */
-if (!reduce) {
+function initMagnetic() {
   document.querySelectorAll('.magnetic').forEach(btn => {
-    const xTo = gsap.quickTo(btn, 'x', { duration: 0.4, ease: 'power3' });
-    const yTo = gsap.quickTo(btn, 'y', { duration: 0.4, ease: 'power3' });
+    const xTo = gsap.quickTo(btn, 'x', { duration: .4, ease: 'power3' });
+    const yTo = gsap.quickTo(btn, 'y', { duration: .4, ease: 'power3' });
     btn.addEventListener('mousemove', e => {
       const r = btn.getBoundingClientRect();
-      xTo((e.clientX - r.left - r.width / 2) * 0.3);
-      yTo((e.clientY - r.top - r.height / 2) * 0.3);
+      xTo((e.clientX - r.left - r.width / 2) * .3);
+      yTo((e.clientY - r.top - r.height / 2) * .3);
     });
-    btn.addEventListener('mouseleave', () => gsap.to(btn, { x: 0, y: 0, duration: 1, ease: 'elastic.out(1,0.3)' }));
-    // Shine sweep, looping
+    btn.addEventListener('mouseleave', () => gsap.to(btn, { x: 0, y: 0, duration: 1, ease: 'elastic.out(1,.3)' }));
     const shine = btn.querySelector('.shine');
     if (shine) gsap.fromTo(shine, { xPercent: -200 }, { xPercent: 400, duration: 1.2, ease: 'power2.inOut', repeat: -1, repeatDelay: 2.5 });
   });
 }
 
-/* ---------- 3D tilt + spotlight on cards ---------- */
-if (!reduce && finePointer) {
+/* ---------- Card tilt + spotlight ---------- */
+function initTilt() {
+  if (!fine) return;
   document.querySelectorAll('.spot').forEach(card => {
     card.addEventListener('mousemove', e => {
       const r = card.getBoundingClientRect();
       const x = e.clientX - r.left, y = e.clientY - r.top;
       card.style.setProperty('--mx', x + 'px');
       card.style.setProperty('--my', y + 'px');
-      gsap.to(card, {
-        rotateX: (y / r.height - 0.5) * -8,
-        rotateY: (x / r.width - 0.5) * 8,
-        transformPerspective: 900, duration: 0.4, ease: 'power2.out', overwrite: 'auto'
-      });
+      gsap.to(card, { rotateX: (y / r.height - .5) * -8, rotateY: (x / r.width - .5) * 8,
+        transformPerspective: 900, duration: .4, ease: 'power2.out', overwrite: 'auto' });
     });
     card.addEventListener('mouseleave', () =>
-      gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.8, ease: 'elastic.out(1,0.4)', overwrite: 'auto' }));
+      gsap.to(card, { rotateX: 0, rotateY: 0, duration: .8, ease: 'elastic.out(1,.4)', overwrite: 'auto' }));
   });
+}
+
+/* ---------- 3D phone follows pointer ---------- */
+function initPhoneTilt() {
+  if (!fine) return;
+  const ph = document.getElementById('phone');
+  const stage = ph.parentElement;
+  const rx = gsap.quickTo(ph, 'rotationX', { duration: .6, ease: 'power3' });
+  const ry = gsap.quickTo(ph, 'rotationY', { duration: .6, ease: 'power3' });
+  stage.addEventListener('mousemove', e => {
+    const r = stage.getBoundingClientRect();
+    rx(-((e.clientY - r.top) / r.height - .5) * 18);
+    ry(((e.clientX - r.left) / r.width - .5) * 24);
+  });
+  stage.addEventListener('mouseleave', () => { rx(0); ry(0); });
+}
+
+/* ---------- Ripple on click ---------- */
+function initRipple() {
+  if (reduce) return;
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.btn');
+    if (!b) return;
+    const r = b.getBoundingClientRect();
+    const s = document.createElement('span');
+    s.className = 'ripple';
+    s.style.left = (e.clientX - r.left) + 'px';
+    s.style.top = (e.clientY - r.top) + 'px';
+    b.appendChild(s);
+    gsap.fromTo(s, { scale: 0, opacity: .6 }, { scale: 30, opacity: 0, duration: .7, ease: 'power2.out', onComplete: () => s.remove() });
+  });
+}
+
+/* ==================== Interactive terminal ==================== */
+function initTerminal() {
+  const out = document.getElementById('t-out');
+  const inp = document.getElementById('t-in');
+  const body = document.getElementById('t-body');
+  const hist = [];
+  let hi = 0;
+
+  const cmds = {
+    help: () => ['available commands:',
+      '  guides     list rooting guide topics',
+      '  path       show the 4-step rooting path',
+      '  telegram   open the channel',
+      '  whoami     who is this',
+      '  date       current UTC time',
+      '  clear      clear the screen'],
+    guides: () => ['[01] Root guides & tutorials',
+      '[02] Magisk modules & LSPosed',
+      '[03] Custom kernels',
+      '[04] Brick recovery',
+      '[05] Performance & debloating',
+      '→ full guides live on Telegram: @Roothelpchannell'],
+    path: () => ['01 back up first', '02 unlock the bootloader (wipes device)', '03 patch with Magisk', '04 tune & debloat'],
+    whoami: () => ['guest@rootshelp: unrooted (for now)'],
+    date: () => [new Date().toUTCString()],
+    telegram: () => { window.open('https://t.me/Roothelpchannell', '_blank', 'noopener'); return ['opening t.me/Roothelpchannell ...']; },
+    clear: () => { out.innerHTML = ''; return []; }
+  };
+
+  function print(lines, cls = 'text-neon/90') {
+    lines.forEach(t => {
+      const d = document.createElement('div');
+      d.className = cls;
+      d.textContent = t;
+      out.appendChild(d);
+    });
+  }
+
+  function run(raw) {
+    const line = raw.trim();
+    const row = document.createElement('div');
+    row.className = 'text-gray-300';
+    row.textContent = 'guest@rootshelp:~$ ' + line;
+    out.appendChild(row);
+    if (line) { hist.push(line); hi = hist.length; }
+    const key = line.toLowerCase().split(/\s+/)[0];
+    if (!key) { /* empty enter */ }
+    else if (Object.hasOwn(cmds, key)) print(cmds[key]());
+    else print(['command not found: ' + key + '  (try "help")'], 'text-red-400');
+    body.scrollTop = body.scrollHeight;
+  }
+
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { run(inp.value); inp.value = ''; }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (hi > 0) { hi--; inp.value = hist[hi]; } }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); if (hi < hist.length) { hi++; inp.value = hist[hi] || ''; } }
+  });
+  body.addEventListener('click', () => inp.focus());
+  addEventListener('keydown', e => {
+    if (e.key === '/' && !(e.target instanceof HTMLInputElement)) {
+      e.preventDefault();
+      document.getElementById('terminal').scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => inp.focus({ preventScroll: true }), 700);
+    }
+  });
+
+  print(["Welcome to RootHelp. Type 'help' to begin."], 'text-gray-500');
+}
+
+/* ==================== Boot ==================== */
+if (reduce) {
+  document.getElementById('loader').remove();
+  startSite();
+} else {
+  runBoot();
 }
 </script>
 </body>
