@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RootHelpChannel | Master Your Android</title>
+<meta name="description" content="Elite guides on Magisk, custom ROMs and kernel optimization. Join @Roothelpchannell on Telegram.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { --neon: #39FF14; --bg: #050505; }
+* { box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e5e7eb; overflow-x: hidden; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+.text-neon { color: var(--neon); text-shadow: 0 0 10px rgba(57,255,20,.5); }
+.gradient-text { background: linear-gradient(45deg, #fff, var(--neon)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+:focus-visible { outline: 2px solid var(--neon); outline-offset: 4px; }
+
+/* Custom cursor: only on fine pointers, JS adds .has-cursor */
+#cursor, #ring { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 9999; border-radius: 50%; opacity: 0; }
+#cursor { width: 10px; height: 10px; background: var(--neon); mix-blend-mode: difference; }
+#ring { width: 40px; height: 40px; border: 1px solid rgba(57,255,20,.6); }
+.has-cursor, .has-cursor * { cursor: none !important; }
+
+/* Scroll progress */
+#progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--neon); transform-origin: 0 50%; transform: scaleX(0); z-index: 60; box-shadow: 0 0 10px var(--neon); }
+
+/* Nav */
+.nav-glass { background: rgba(5,5,5,.6); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,.05); }
+
+/* Loader */
+#loader { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* Blobs and grid */
+.blob { position: absolute; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(57,255,20,.08) 0%, transparent 70%); filter: blur(80px); border-radius: 50%; z-index: 0; pointer-events: none; }
+.grid-bg { background-image: linear-gradient(rgba(57,255,20,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(57,255,20,.05) 1px, transparent 1px); background-size: 60px 60px; -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
+
+/* Glass cards with cursor-following spotlight and 3D tilt (JS) */
+.glass { background: rgba(15,15,15,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.06); position: relative; transition: border-color .4s, box-shadow .4s; }
+.spot { overflow: hidden; will-change: transform; }
+.spot::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s; background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(57,255,20,.16), transparent 45%); }
+.spot:hover::before { opacity: 1; }
+.spot:hover { border-color: rgba(57,255,20,.55); box-shadow: 0 20px 40px rgba(0,0,0,.4), 0 0 30px rgba(57,255,20,.12); }
+
+/* Buttons */
+.btn-neon { background: var(--neon); color: #000; font-weight: 700; box-shadow: 0 0 20px rgba(57,255,20,.3); position: relative; overflow: hidden; transition: box-shadow .3s; }
+.btn-neon:hover { box-shadow: 0 0 40px rgba(57,255,20,.6); }
+.shine { position: absolute; top: 0; bottom: 0; left: 0; width: 40%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.7), transparent); pointer-events: none; transform: translateX(-200%); }
+
+/* Ticker */
+.ticker-wrap { overflow: hidden; border-block: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.4); }
+.ticker-track { display: flex; width: max-content; white-space: nowrap; }
+
+/* Terminal caret */
+#term > div:last-child::after { content: "_"; margin-left: 2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shine, #term > div:last-child::after { animation: none; }
+}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- Boot loader -->
+<div id="loader" aria-hidden="true">
+  <div class="mono text-sm md:text-base text-neon w-[min(90vw,560px)]">
+    <div id="boot" class="space-y-1 min-h-[11rem]"></div>
+    <div class="mt-4 h-[2px] bg-white/10"><div id="bar" class="h-full bg-[#39FF14] origin-left" style="transform:scaleX(0)"></div></div>
+    <p class="mt-3 text-xs text-gray-600">click to skip</p>
+  </div>
+</div>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="ring"></div>
+<div id="progress"></div>
+
+<!-- Nav -->
+<nav id="nav" class="fixed top-0 inset-x-0 z-40 nav-glass">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="mono font-bold text-neon">RootHelp<span class="text-white">Channel</span></a>
+    <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn-neon magnetic px-5 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+      <span class="shine"></span><i data-lucide="send" class="w-4 h-4"></i> Join
+    </a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section id="top" class="hero min-h-screen flex flex-col items-center justify-center px-6 text-center relative overflow-hidden">
+  <div class="absolute inset-0 grid-bg pointer-events-none"></div>
+  <div class="blob" id="blob1" style="top:-10%;left:-10%"></div>
+  <div class="blob" id="blob2" style="bottom:-10%;right:-10%"></div>
+
+  <div class="hero-content relative z-10 max-w-4xl pt-16">
+    <div class="inline-block px-4 py-1 mb-6 border border-green-500/30 rounded-full bg-green-500/10 text-neon text-sm mono" id="badge">
+      &lt; Rooting_Enabled /&gt;
+    </div>
+    <h1 class="text-5xl md:text-8xl font-extrabold mb-6 leading-tight" style="perspective:800px">
+      <span class="block" id="line1">Unleash the Full Power</span>
+      <span class="block gradient-text" id="line2">of Your Android</span>
+    </h1>
+    <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10" id="hero-p">
+      Join <span class="text-white font-semibold">@Roothelpchannell</span> on Telegram for elite guides on Magisk, Custom ROMs, and kernel optimization.
+    </p>
+    <div id="hero-cta">
+      <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn-neon magnetic px-8 py-4 rounded-xl text-lg inline-flex items-center gap-2">
+        <span class="shine"></span><i data-lucide="send"></i> Join Telegram Channel
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Ticker -->
+<div class="ticker-wrap py-5 ">
+  <div class="ticker-track mono text-sm md:text-base text-gray-500 tracking-widest">
+    <div class="flex gap-10 pr-10 shrink-0">
+      <span>MAGISK</span><span class="text-neon">✦</span><span>LSPOSED</span><span class="text-neon">✦</span>
+      <span>CUSTOM ROMS</span><span class="text-neon">✦</span><span>KERNEL TWEAKS</span><span class="text-neon">✦</span>
+      <span>BRICK RECOVERY</span><span class="text-neon">✦</span><span>DEBLOATING</span><span class="text-neon">✦</span>
+    </div>
+  </div>
+</div>
+
+<!-- Features -->
+<section class="py-24 px-6 max-w-6xl mx-auto">
+  <div class="text-center mb-16 reveal">
+    <h2 class="text-4xl md:text-6xl font-bold mb-4">Master the <span class="text-neon">OS</span></h2>
+    <p class="text-gray-400">Everything you need to transition from a user to a power-user.</p>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8" style="perspective:1000px">
+    <div class="glass spot p-8 rounded-3xl feature-card">
+      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="book-open"></i></div>
+      <h3 class="text-2xl font-bold mb-3">Root Guides &amp; Tutorials</h3>
+      <p class="text-gray-400 leading-relaxed">Comprehensive, step-by-step walkthroughs for unlocking bootloaders and achieving root access safely.</p>
+    </div>
+    <div class="glass spot p-8 rounded-3xl feature-card">
+      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="cpu"></i></div>
+      <h3 class="text-2xl font-bold mb-3">Magisk &amp; Kernel Tweaks</h3>
+      <p class="text-gray-400 leading-relaxed">The best Magisk modules, LSPosed configurations, and custom kernels to push your hardware to the limit.</p>
+    </div>
+    <div class="glass spot p-8 rounded-3xl feature-card">
+      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="life-buoy"></i></div>
+      <h3 class="text-2xl font-bold mb-3">Brick Recovery</h3>
+      <p class="text-gray-400 leading-relaxed">Facing a bootloop or soft-brick? We provide the tools and knowledge to rescue your device.</p>
+    </div>
+    <div class="glass spot p-8 rounded-3xl feature-card">
+      <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center text-neon mb-6"><i data-lucide="zap"></i></div>
+      <h3 class="text-2xl font-bold mb-3">Performance Optimization</h3>
+      <p class="text-gray-400 leading-relaxed">Gaming tweaks, battery life optimization, and debloating guides for a buttery smooth experience.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Trust -->
+<section class="py-24 px-6 bg-zinc-900/30 relative overflow-hidden">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <div class="trust-text">
+      <h2 class="text-4xl md:text-6xl font-bold mb-8 leading-tight">Why Trust <br><span class="text-neon">@Roothelpchannell?</span></h2>
+      <div class="space-y-8">
+        <div class="flex gap-5 trust-item">
+          <div class="text-neon mt-1"><i data-lucide="check-circle"></i></div>
+          <div><h4 class="font-bold text-xl">Verified Guides</h4><p class="text-gray-400">We prioritize safety. Every method is tested to minimize the risk of bricking.</p></div>
+        </div>
+        <div class="flex gap-5 trust-item">
+          <div class="text-neon mt-1"><i data-lucide="refresh-cw"></i></div>
+          <div><h4 class="font-bold text-xl">Up-to-Date Methods</h4><p class="text-gray-400">Android changes fast. We provide updates for the latest security patches.</p></div>
+        </div>
+        <div class="flex gap-5 trust-item">
+          <div class="text-neon mt-1"><i data-lucide="users"></i></div>
+          <div><h4 class="font-bold text-xl">Active Community</h4><p class="text-gray-400">Direct access to experts and a community of Android enthusiasts.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="relative trust-img">
+      <div class="glass p-4 rounded-[2rem] rotate-3 hover:rotate-0 transition-transform duration-700">
+        <div class="rounded-2xl overflow-hidden">
+          <img class="trust-photo w-full scale-110 rounded-2xl opacity-90" src="https://images.unsplash.com/photo-1512941937669-90a1b58e7054?auto=format&fit=crop&q=80&w=800" alt="Android">
+        </div>
+        <div class="glass absolute -bottom-8 -left-8 p-6 rounded-2xl shadow-2xl">
+          <div id="term" class="mono text-sm font-bold text-neon min-h-[3.5rem] space-y-1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer CTA -->
+<footer class="py-32 px-6 text-center relative">
+  <div class="footer-content">
+    <h2 id="foot-h" class="text-4xl md:text-7xl font-bold mb-8">Ready to break the limits?</h2>
+    <p class="text-gray-400 mb-12 max-w-xl mx-auto text-lg">Stop settling for factory restrictions. Join the elite Android community on Telegram.</p>
+    <a href="https://t.me/Roothelpchannell" target="_blank" rel="noopener" class="btn-neon magnetic px-12 py-5 rounded-2xl text-xl inline-flex items-center gap-3">
+      <span class="shine"></span><i data-lucide="send"></i> Join @Roothelpchannell
+    </a>
+  </div>
+  <div class="mt-32 pt-8 border-t border-white/10 text-gray-600 text-sm mono">
+    &copy; 2026 RootHelpChannel | Android Rooting Specialists
+  </div>
+</footer>
+
+<script>
+/* ---------- Setup ---------- */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer = matchMedia('(pointer:fine)').matches;
+gsap.registerPlugin(ScrollTrigger);
+lucide.createIcons();
+
+/* ---------- Helpers ---------- */
+// Splits text into word and char spans (words never break mid-word).
+function splitText(el, cls = '') {
+  const text = el.textContent.trim();
+  el.textContent = '';
+  el.setAttribute('aria-label', text);
+  const words = [], chars = [];
+  text.split(/\s+/).forEach((word, i) => {
+    if (i) el.appendChild(document.createTextNode(' '));
+    const w = document.createElement('span');
+    w.className = 'inline-block whitespace-nowrap';
+    w.setAttribute('aria-hidden', 'true');
+    [...word].forEach(c => {
+      const s = document.createElement('span');
+      s.className = 'inline-block ' + cls;
+      s.textContent = c;
+      w.appendChild(s);
+      chars.push(s);
+    });
+    el.appendChild(w);
+    words.push(w);
+  });
+  return { words, chars };
+}
+
+// Types each line into a container, one after another, on a timeline.
+function typeSequence(tl, container, lines, speed = 0.03) {
+  lines.forEach(text => {
+    const line = document.createElement('div');
+    container.appendChild(line);
+    const o = { n: 0 };
+    tl.to(o, { n: text.length, duration: text.length * speed, ease: 'none',
+      onUpdate: () => { line.textContent = text.slice(0, Math.round(o.n)); } });
+    tl.to({}, { duration: 0.12 });
+  });
+  return tl;
+}
+
+/* ---------- Boot loader ---------- */
+const bootLines = [
+  '> init RootHelpChannel kernel',
+  '> checking bootloader ........ [LOCKED]',
+  '> preparing unlock ........... [OK]',
+  '> injecting Magisk ........... [OK]',
+  '> loading LSPosed modules .... [OK]',
+  '> ACCESS GRANTED'
+];
+
+function runBoot() {
+  const loader = document.getElementById('loader');
+  const tl = gsap.timeline({ defaults: { ease: 'none' } });
+  typeSequence(tl, document.getElementById('boot'), bootLines, 0.012);
+  tl.to('#bar', { transform: 'scaleX(1)', duration: tl.duration(), ease: 'power1.inOut' }, 0);
+  tl.to(loader, {
+    yPercent: -100, duration: 0.9, delay: 0.3, ease: 'expo.inOut',
+    onStart: startSite,
+    onComplete: () => loader.remove()
+  });
+  loader.addEventListener('click', () => tl.timeScale(12));
+}
+
+/* ---------- Site motion (starts after loader) ---------- */
+const hero1 = splitText(document.getElementById('line1'));
+const hero2 = splitText(document.getElementById('line2'));
+const footChars = splitText(document.getElementById('foot-h')).chars;
+
+function startSite() {
+  // Hero intro
+  gsap.set(hero1.chars.concat(hero2.chars), { yPercent: 110, rotateX: -90, opacity: 0, transformOrigin: '50% 100%' });
+  gsap.set('#badge', { scale: 0, opacity: 0 });
+  gsap.set('#hero-p', { y: 30, opacity: 0 });
+  gsap.set('#hero-cta', { y: 20, opacity: 0, scale: 0.9 });
+  gsap.set('.ticker-wrap', { opacity: 0 });
+
+  const intro = gsap.timeline({ defaults: { ease: 'power4.out' } });
+  intro.to('#badge', { scale: 1, opacity: 1, duration: 0.6, ease: 'back.out(1.7)' })
+    .to(hero1.chars, { yPercent: 0, rotateX: 0, opacity: 1, duration: 1, stagger: 0.025 }, '-=0.2')
+    .to(hero2.chars, { yPercent: 0, rotateX: 0, opacity: 1, duration: 1, stagger: 0.025 }, '-=0.7')
+    .to('#hero-p', { y: 0, opacity: 1, duration: 0.9 }, '-=0.5')
+    .to('#hero-cta', { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: 'back.out(1.4)' }, '-=0.6')
+    .to('.ticker-wrap', { opacity: 1, duration: 0.8 }, '-=0.4');
+
+  if (reduce) return;
+
+  // Scroll progress bar
+  gsap.to('#progress', { scaleX: 1, ease: 'none',
+    scrollTrigger: { trigger: document.documentElement, start: 'top top', end: 'bottom bottom', scrub: 0.3 } });
+
+  // Hero fades and drifts as you scroll away
+  gsap.to('.hero-content', { yPercent: 30, opacity: 0, ease: 'none',
+    scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+
+  // Nav hides on scroll down, returns on scroll up
+  ScrollTrigger.create({
+    start: 'top -120', end: 'max',
+    onUpdate: s => gsap.to('#nav', { yPercent: s.direction === 1 ? -100 : 0, duration: 0.4, ease: 'power3.out', overwrite: true })
+  });
+
+  // Generic reveal headings
+  gsap.utils.toArray('.reveal').forEach(el => {
+    gsap.set(el, { y: 60, opacity: 0 });
+    gsap.to(el, { y: 0, opacity: 1, duration: 1, ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 85%' } });
+  });
+
+  // Feature cards: staggered batch on enter
+  gsap.set('.feature-card', { y: 90, opacity: 0, rotateX: -15 });
+  ScrollTrigger.batch('.feature-card', {
+    start: 'top 88%', once: true,
+    onEnter: batch => gsap.to(batch, { y: 0, opacity: 1, rotateX: 0, stagger: 0.15, duration: 1, ease: 'power4.out' })
+  });
+
+  // Trust list and image
+  gsap.set('.trust-item', { x: -40, opacity: 0 });
+  gsap.set('.trust-img', { x: 120, rotate: 10, opacity: 0 });
+  gsap.to('.trust-item', { x: 0, opacity: 1, stagger: 0.25, duration: 0.8, ease: 'power2.out',
+    scrollTrigger: { trigger: '.trust-text', start: 'top 75%' } });
+  gsap.to('.trust-img', { x: 0, rotate: 0, opacity: 1, duration: 1.2, ease: 'power4.out',
+    scrollTrigger: { trigger: '.trust-img', start: 'top 80%' } });
+
+  // Photo parallax inside the trust card
+  gsap.to('.trust-photo', { yPercent: -10, ease: 'none',
+    scrollTrigger: { trigger: '.trust-img', start: 'top bottom', end: 'bottom top', scrub: true } });
+
+  // Terminal types out once when the card appears
+  ScrollTrigger.create({
+    trigger: '.trust-img', start: 'top 70%', once: true,
+    onEnter: () => typeSequence(gsap.timeline({ delay: 0.4 }), document.getElementById('term'),
+      ['STATUS: ROOTED', 'KERNEL: LIQUID_CUSTOM_V4'], 0.04)
+  });
+
+  // Footer headline: letters light up as you scroll
+  gsap.fromTo(footChars, { opacity: 0.12 }, { opacity: 1, duration: 1, stagger: 0.05, ease: 'none',
+    scrollTrigger: { trigger: '#foot-h', start: 'top 85%', end: 'bottom 45%', scrub: true } });
+
+  // Footer CTA block
+  gsap.set('.footer-content', { y: 50, opacity: 0 });
+  gsap.to('.footer-content', { y: 0, opacity: 1, duration: 1, ease: 'power3.out',
+    scrollTrigger: { trigger: '.footer-content', start: 'top 90%' } });
+}
+
+if (reduce) {
+  document.getElementById('loader').remove();
+  startSite();
+} else {
+  runBoot();
+}
+
+/* ---------- Ambient: ticker that slows on hover ---------- */
+const ticker = document.querySelector('.ticker-track');
+ticker.innerHTML += ticker.innerHTML; // duplicate so the loop is seamless
+if (!reduce) {
+  const tk = gsap.to(ticker, { xPercent: -50, duration: 28, ease: 'none', repeat: -1 });
+  const wrap = document.querySelector('.ticker-wrap');
+  wrap.addEventListener('mouseenter', () => gsap.to(tk, { timeScale: 0.15, duration: 0.6 }));
+  wrap.addEventListener('mouseleave', () => gsap.to(tk, { timeScale: 1, duration: 0.6 }));
+}
+
+/* ---------- Ambient: parallax blobs following the mouse ---------- */
+if (!reduce) {
+  const b1x = gsap.quickTo('#blob1', 'x', { duration: 1.5, ease: 'power3' });
+  const b1y = gsap.quickTo('#blob1', 'y', { duration: 1.5, ease: 'power3' });
+  const b2x = gsap.quickTo('#blob2', 'x', { duration: 1.5, ease: 'power3' });
+  const b2y = gsap.quickTo('#blob2', 'y', { duration: 1.5, ease: 'power3' });
+  window.addEventListener('mousemove', e => {
+    const x = e.clientX / innerWidth - 0.5, y = e.clientY / innerHeight - 0.5;
+    b1x(x * 100); b1y(y * 100); b2x(-x * 100); b2y(-y * 100);
+  });
+}
+
+/* ---------- Custom cursor (fine pointers only) ---------- */
+if (!reduce && finePointer) {
+  document.body.classList.add('has-cursor');
+  const dot = document.getElementById('cursor'), ring = document.getElementById('ring');
+  gsap.set([dot, ring], { xPercent: -50, yPercent: -50 });
+  const dx = gsap.quickTo(dot, 'x', { duration: 0.1 }), dy = gsap.quickTo(dot, 'y', { duration: 0.1 });
+  const rx = gsap.quickTo(ring, 'x', { duration: 0.5, ease: 'power3' }), ry = gsap.quickTo(ring, 'y', { duration: 0.5, ease: 'power3' });
+  let shown = false;
+  window.addEventListener('mousemove', e => {
+    if (!shown) { gsap.to([dot, ring], { opacity: 1, duration: 0.3 }); shown = true; }
+    dx(e.clientX); dy(e.clientY); rx(e.clientX); ry(e.clientY);
+  });
+  window.addEventListener('mousedown', () => gsap.to(ring, { scale: 0.7, duration: 0.15 }));
+  window.addEventListener('mouseup', () => gsap.to(ring, { scale: 1, duration: 0.3 }));
+  document.querySelectorAll('a, button, .spot').forEach(el => {
+    el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 1.8, backgroundColor: 'rgba(57,255,20,.1)', duration: 0.3 }));
+    el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, backgroundColor: 'rgba(0,0,0,0)', duration: 0.3 }));
+  });
+}
+
+/* ---------- Magnetic buttons ---------- */
+if (!reduce) {
+  document.querySelectorAll('.magnetic').forEach(btn => {
+    const xTo = gsap.quickTo(btn, 'x', { duration: 0.4, ease: 'power3' });
+    const yTo = gsap.quickTo(btn, 'y', { duration: 0.4, ease: 'power3' });
+    btn.addEventListener('mousemove', e => {
+      const r = btn.getBoundingClientRect();
+      xTo((e.clientX - r.left - r.width / 2) * 0.3);
+      yTo((e.clientY - r.top - r.height / 2) * 0.3);
+    });
+    btn.addEventListener('mouseleave', () => gsap.to(btn, { x: 0, y: 0, duration: 1, ease: 'elastic.out(1,0.3)' }));
+    // Shine sweep, looping
+    const shine = btn.querySelector('.shine');
+    if (shine) gsap.fromTo(shine, { xPercent: -200 }, { xPercent: 400, duration: 1.2, ease: 'power2.inOut', repeat: -1, repeatDelay: 2.5 });
+  });
+}
+
+/* ---------- 3D tilt + spotlight on cards ---------- */
+if (!reduce && finePointer) {
+  document.querySelectorAll('.spot').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      card.style.setProperty('--mx', x + 'px');
+      card.style.setProperty('--my', y + 'px');
+      gsap.to(card, {
+        rotateX: (y / r.height - 0.5) * -8,
+        rotateY: (x / r.width - 0.5) * 8,
+        transformPerspective: 900, duration: 0.4, ease: 'power2.out', overwrite: 'auto'
+      });
+    });
+    card.addEventListener('mouseleave', () =>
+      gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.8, ease: 'elastic.out(1,0.4)', overwrite: 'auto' }));
+  });
+}
+</script>
+</body>
+</html>
